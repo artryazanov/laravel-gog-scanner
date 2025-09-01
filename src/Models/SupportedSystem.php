@@ -4,9 +4,10 @@ namespace Artryazanov\GogScanner\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class GameSupportedSystem extends Model
+class SupportedSystem extends Model
 {
     protected $table = 'gog_game_supported_systems';
     public $timestamps = false;
-    protected $fillable = ['game_id','system'];
+    protected $fillable = ['system'];
 }
+

@@ -5,8 +5,8 @@ namespace Artryazanov\GogScanner\Tests\Jobs;
 use Artryazanov\GogScanner\Jobs\ScanGameDetailJob;
 use Artryazanov\GogScanner\Jobs\ScanPageJob;
 use Artryazanov\GogScanner\Models\{
-    Game, GamePrice, GameAvailability, GameSalesVisibility, GameWorksOn,
-    GameSupportedSystem, GameGenre, GameGallery, GameVideo
+    Game, GamePrice, GameSalesVisibility,
+    GameGallery, GameVideo
 };
 use Artryazanov\GogScanner\Tests\TestCase;
 use Illuminate\Support\Facades\Bus;
@@ -164,16 +164,24 @@ class ScanPageJobTest extends TestCase
         $g1 = Game::find(1841631965);
         $this->assertNotNull($g1);
         $this->assertNotNull(GamePrice::where('game_id', $g1->id)->first());
-        $this->assertNotNull(GameAvailability::where('game_id', $g1->id)->first());
+        $this->assertTrue((bool) $g1->is_available);
+        $this->assertTrue((bool) $g1->is_available_in_account);
         $this->assertNotNull(GameSalesVisibility::where('game_id', $g1->id)->first());
-        $this->assertNotNull(GameWorksOn::where('game_id', $g1->id)->first());
-        $this->assertSame(2, GameSupportedSystem::where('game_id', $g1->id)->count());
-        $this->assertSame(3, GameGenre::where('game_id', $g1->id)->count());
+        $this->assertTrue((bool) $g1->works_on_windows);
+        $this->assertTrue((bool) $g1->works_on_mac);
+        $this->assertFalse((bool) $g1->works_on_linux);
+        $this->assertSame(2, $g1->supportedSystems()->count());
+        $this->assertSame(3, $g1->genres()->count());
         $this->assertSame(2, GameGallery::where('game_id', $g1->id)->count());
+        // Companies
+        $this->assertSame(1, $g1->developers()->count());
+        $this->assertSame(1, $g1->publishers()->count());
 
         $g2 = Game::find(1511212118);
         $this->assertNotNull($g2);
         $this->assertSame(1, GameVideo::where('game_id', $g2->id)->count());
+        $this->assertSame(1, $g2->developers()->count());
+        $this->assertSame(1, $g2->publishers()->count());
 
         Bus::assertDispatchedTimes(ScanGameDetailJob::class, 2);
     }

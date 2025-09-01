@@ -7,8 +7,8 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Artryazanov\GogScanner\Jobs\ScanGameDetailJob;
 use Artryazanov\GogScanner\Models\{
-    Game, GameContentCompatibility, GameLanguage, GameLink, GameInDevelopment,
-    GameImages, GameArtifact, GameArtifactFile, GameDescription, GameScreenshot, GameScreenshotImage
+    Game, Language,
+    GameImages, GameArtifact, GameArtifactFile, GameScreenshot, GameScreenshotImage
 };
 
 class ScanGameDetailJobTest extends TestCase
@@ -118,15 +118,21 @@ class ScanGameDetailJobPositiveTest extends TestCase
 
         (new ScanGameDetailJob($game->id))->handle();
 
-        $this->assertSame('unreal_tournament_2004_ece', Game::find($game->id)->slug);
-        $this->assertTrue(GameContentCompatibility::where('game_id', $game->id)->value('windows'));
-        $this->assertSame(1, GameLanguage::where('game_id', $game->id)->count());
-        $this->assertNotNull(GameLink::where('game_id', $game->id)->first());
-        $this->assertNotNull(GameInDevelopment::where('game_id', $game->id)->first());
+        $g = Game::find($game->id);
+        $this->assertSame('unreal_tournament_2004_ece', $g->slug);
+        $this->assertTrue((bool) $g->content_windows);
+        $this->assertSame(1, $g->languages()->count());
+        $this->assertNotNull($g->purchase_link);
+        $this->assertNotNull($g->product_card);
+        $this->assertNotNull($g->support);
+        $this->assertNotNull($g->forum);
+        $this->assertFalse((bool) $g->is_in_development);
+        $this->assertNull($g->in_development_until);
         $this->assertNotNull(GameImages::where('game_id', $game->id)->first());
         $this->assertSame(4, GameArtifact::where('game_id', $game->id)->count());
         $this->assertSame(5, GameArtifactFile::count());
-        $this->assertNotNull(GameDescription::where('game_id', $game->id)->first());
+        $this->assertSame('lead', $g->lead);
+        $this->assertSame('full', $g->full);
         $this->assertSame(1, GameScreenshot::where('game_id', $game->id)->count());
         $this->assertSame(2, GameScreenshotImage::count());
     }

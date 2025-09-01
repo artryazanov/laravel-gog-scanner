@@ -4,9 +4,9 @@ namespace Artryazanov\GogScanner\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class GameGenre extends Model
+class Genre extends Model
 {
     protected $table = 'gog_game_genres';
     public $timestamps = false;
-    protected $fillable = ['game_id','name'];
+    protected $fillable = ['name'];
 }

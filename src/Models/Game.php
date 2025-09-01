@@ -5,6 +5,8 @@ namespace Artryazanov\GogScanner\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Game extends Model
 {
@@ -17,10 +19,9 @@ class Game extends Model
         'id',
         'title',
         'slug',
-        'developer',
-        'publisher',
-        'category',
-        'original_category',
+        // developer/publisher via pivot tables now
+        'category_id',
+        'original_category_id',
         'rating',
         'type',
         'is_game',
@@ -47,28 +48,50 @@ class Game extends Model
         'is_secret',
         'is_installable',
         'release_date_iso',
+        // Moved 1:1 fields
+        'is_available','is_available_in_account',
+        'works_on_windows','works_on_mac','works_on_linux',
+        'content_windows','content_osx','content_linux',
+        'purchase_link','product_card','support','forum',
+        'in_development_until',
+        'lead','full','whats_cool_about_it',
         'created_at',
         'updated_at'
     ];
 
     // 1:1 relations
     public function price(): HasOne { return $this->hasOne(GamePrice::class); }
-    public function availability(): HasOne { return $this->hasOne(GameAvailability::class); }
     public function salesVisibility(): HasOne { return $this->hasOne(GameSalesVisibility::class); }
-    public function worksOn(): HasOne { return $this->hasOne(GameWorksOn::class); }
-    public function contentCompatibility(): HasOne { return $this->hasOne(GameContentCompatibility::class); }
-    public function links(): HasOne { return $this->hasOne(GameLink::class); }
-    public function inDevelopment(): HasOne { return $this->hasOne(GameInDevelopment::class); }
     public function images(): HasOne { return $this->hasOne(GameImages::class); }
-    public function description(): HasOne { return $this->hasOne(GameDescription::class); }
 
     // 1:many relations
-    public function genres(): HasMany { return $this->hasMany(GameGenre::class); }
+    public function genres(): BelongsToMany { return $this->belongsToMany(Genre::class, 'gog_game_genre', 'game_id', 'genre_id'); }
     public function gallery(): HasMany { return $this->hasMany(GameGallery::class); }
-    public function supportedSystems(): HasMany { return $this->hasMany(GameSupportedSystem::class); }
-    public function languages(): HasMany { return $this->hasMany(GameLanguage::class); }
+    public function supportedSystems(): BelongsToMany { return $this->belongsToMany(SupportedSystem::class, 'gog_game_supported_system', 'game_id', 'supported_system_id'); }
+    public function languages(): BelongsToMany { return $this->belongsToMany(Language::class, 'gog_game_language', 'game_id', 'language_id'); }
     public function dlcs(): HasMany { return $this->hasMany(GameDlc::class); }
     public function artifacts(): HasMany { return $this->hasMany(GameArtifact::class); }
     public function screenshots(): HasMany { return $this->hasMany(GameScreenshot::class); }
     public function videos(): HasMany { return $this->hasMany(GameVideo::class); }
+
+    // Companies (many-to-many via role-specific pivots)
+    public function developers(): BelongsToMany
+    {
+        return $this->belongsToMany(Company::class, 'gog_game_developers', 'game_id', 'company_id');
+    }
+
+    public function publishers(): BelongsToMany
+    {
+        return $this->belongsToMany(Company::class, 'gog_game_publishers', 'game_id', 'company_id');
+    }
+
+    public function category(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'category_id');
+    }
+
+    public function originalCategory(): BelongsTo
+    {
+        return $this->belongsTo(Category::class, 'original_category_id');
+    }
 }

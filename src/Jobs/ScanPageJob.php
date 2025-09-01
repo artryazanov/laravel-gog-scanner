@@ -9,8 +9,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Artryazanov\GogScanner\Models\{
-    Game, GameAvailability, GamePrice, GameSalesVisibility, GameWorksOn,
-    GameGenre, GameGallery, GameSupportedSystem, GameVideo
+    Game, GamePrice, GameSalesVisibility,
+    Genre, GameGallery, SupportedSystem, GameVideo, Company, Category
 };
 
 class ScanPageJob implements ShouldQueue
@@ -62,15 +62,21 @@ class ScanPageJob implements ShouldQueue
             }
 
             // Base game record
+            $categoryId = null;
+            if (!empty($p['category'])) {
+                $categoryId = Category::firstOrCreate(['name' => (string) $p['category']])->id;
+            }
+            $originalCategoryId = null;
+            if (!empty($p['originalCategory'])) {
+                $originalCategoryId = Category::firstOrCreate(['name' => (string) $p['originalCategory']])->id;
+            }
             $game = Game::updateOrCreate(
                 ['id' => $gameId],
                 [
                     'title'                 => $p['title'] ?? '',
                     'slug'                  => $p['slug'] ?? null,
-                    'developer'             => $p['developer'] ?? null,
-                    'publisher'             => $p['publisher'] ?? null,
-                    'category'              => $p['category'] ?? null,
-                    'original_category'     => $p['originalCategory'] ?? null,
+                    'category_id'           => $categoryId,
+                    'original_category_id'  => $originalCategoryId,
                     'rating'                => isset($p['rating']) ? (int) $p['rating'] : null,
                     'type'                  => isset($p['type']) ? (int) $p['type'] : null,
                     'is_game'               => (bool) ($p['isGame'] ?? false),
@@ -94,6 +100,28 @@ class ScanPageJob implements ShouldQueue
                 ]
             );
 
+            // Developers (comma-separated string in listing)
+            if (array_key_exists('developer', $p)) {
+                $devIds = [];
+                foreach (preg_split('/,\s*/', (string) ($p['developer'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) as $name) {
+                    $devIds[] = Company::firstOrCreate(['name' => $name])->id;
+                }
+                if ($devIds) {
+                    $game->developers()->sync($devIds);
+                }
+            }
+
+            // Publishers (comma-separated string in listing)
+            if (array_key_exists('publisher', $p)) {
+                $pubIds = [];
+                foreach (preg_split('/,\s*/', (string) ($p['publisher'] ?? ''), -1, PREG_SPLIT_NO_EMPTY) as $name) {
+                    $pubIds[] = Company::firstOrCreate(['name' => $name])->id;
+                }
+                if ($pubIds) {
+                    $game->publishers()->sync($pubIds);
+                }
+            }
+
             // Price (1:1)
             if (isset($p['price']) && is_array($p['price'])) {
                 GamePrice::updateOrCreate(
@@ -116,15 +144,12 @@ class ScanPageJob implements ShouldQueue
                 );
             }
 
-            // Availability (1:1)
+            // Availability (moved to gog_games)
             if (isset($p['availability']) && is_array($p['availability'])) {
-                GameAvailability::updateOrCreate(
-                    ['game_id' => $game->id],
-                    [
-                        'is_available'            => (bool) ($p['availability']['isAvailable'] ?? false),
-                        'is_available_in_account' => (bool) ($p['availability']['isAvailableInAccount'] ?? false),
-                    ]
-                );
+                $game->update([
+                    'is_available'            => (bool) ($p['availability']['isAvailable'] ?? false),
+                    'is_available_in_account' => (bool) ($p['availability']['isAvailableInAccount'] ?? false),
+                ]);
             }
 
             // Sales visibility (1:1)
@@ -146,34 +171,33 @@ class ScanPageJob implements ShouldQueue
                 );
             }
 
-            // Supported OS (1:1 worksOn) + separate rows for supportedOperatingSystems
+            // Supported OS flags on parent + separate rows for supportedOperatingSystems
             if (isset($p['worksOn']) && is_array($p['worksOn'])) {
-                GameWorksOn::updateOrCreate(
-                    ['game_id' => $game->id],
-                    [
-                        'windows' => (bool) ($p['worksOn']['Windows'] ?? false),
-                        'mac'     => (bool) ($p['worksOn']['Mac'] ?? false),
-                        'linux'   => (bool) ($p['worksOn']['Linux'] ?? false),
-                    ]
-                );
+                $game->update([
+                    'works_on_windows' => (bool) ($p['worksOn']['Windows'] ?? false),
+                    'works_on_mac'     => (bool) ($p['worksOn']['Mac'] ?? false),
+                    'works_on_linux'   => (bool) ($p['worksOn']['Linux'] ?? false),
+                ]);
             }
 
             if (isset($p['supportedOperatingSystems']) && is_array($p['supportedOperatingSystems'])) {
-                GameSupportedSystem::where('game_id', $game->id)->delete();
+                $ids = [];
                 foreach ($p['supportedOperatingSystems'] as $sys) {
-                    GameSupportedSystem::create([
-                        'game_id' => $game->id,
-                        'system'  => (string) $sys,
-                    ]);
+                    $system = SupportedSystem::firstOrCreate(['system' => (string) $sys]);
+                    $ids[] = $system->id;
                 }
+                $game->supportedSystems()->sync($ids);
             }
 
-            // Genres
+            // Genres dictionary + pivot sync
             if (isset($p['genres']) && is_array($p['genres'])) {
-                GameGenre::where('game_id', $game->id)->delete();
-                foreach ($p['genres'] as $genre) {
-                    GameGenre::create(['game_id' => $game->id, 'name' => (string) $genre]);
+                $genreIds = [];
+                foreach ($p['genres'] as $genreName) {
+                    $name = (string) $genreName;
+                    $genre = Genre::firstOrCreate(['name' => $name]);
+                    $genreIds[] = $genre->id;
                 }
+                $game->genres()->sync($genreIds);
             }
 
             // Gallery

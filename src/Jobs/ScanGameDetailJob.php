@@ -9,8 +9,8 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Artryazanov\GogScanner\Models\{
-    Game, GameContentCompatibility, GameLanguage, GameLink, GameInDevelopment, GameImages,
-    GameDlc, GameArtifact, GameArtifactFile, GameDescription, GameScreenshot, GameScreenshotImage,
+    Game, Language, GameImages,
+    GameDlc, GameArtifact, GameArtifactFile, GameScreenshot, GameScreenshotImage,
     GameVideo
 };
 
@@ -70,52 +70,46 @@ class ScanGameDetailJob implements ShouldQueue
             'release_date_iso' => $d['release_date'] ?? $game->release_date_iso,
         ]);
 
-        // content_system_compatibility (1:1)
+        // content_system_compatibility (moved to gog_games)
         if (isset($d['content_system_compatibility'])) {
-            GameContentCompatibility::updateOrCreate(
-                ['game_id' => $game->id],
-                [
-                    'windows' => (bool) ($d['content_system_compatibility']['windows'] ?? false),
-                    'osx'     => (bool) ($d['content_system_compatibility']['osx'] ?? false),
-                    'linux'   => (bool) ($d['content_system_compatibility']['linux'] ?? false),
-                ]
-            );
+            $game->update([
+                'content_windows' => (bool) ($d['content_system_compatibility']['windows'] ?? false),
+                'content_osx'     => (bool) ($d['content_system_compatibility']['osx'] ?? false),
+                'content_linux'   => (bool) ($d['content_system_compatibility']['linux'] ?? false),
+            ]);
         }
 
-        // languages (map code => name)
+        // languages (map code => name) via dictionary + pivot
         if (isset($d['languages']) && is_array($d['languages'])) {
-            GameLanguage::where('game_id', $game->id)->delete();
+            $ids = [];
             foreach ($d['languages'] as $code => $name) {
-                GameLanguage::create([
-                    'game_id' => $game->id,
-                    'code'    => (string) $code,
-                    'name'    => (string) $name,
-                ]);
+                $lang = Language::firstOrCreate(['code' => (string) $code], ['name' => (string) $name]);
+                // Optional: keep name fresh if changed
+                if ($lang->name !== (string) $name) {
+                    $lang->name = (string) $name;
+                    $lang->save();
+                }
+                $ids[] = $lang->id;
             }
+            $game->languages()->sync($ids);
         }
 
-        // links (1:1)
+        // links (moved to gog_games)
         if (isset($d['links']) && is_array($d['links'])) {
-            GameLink::updateOrCreate(
-                ['game_id' => $game->id],
-                [
-                    'purchase_link' => $d['links']['purchase_link'] ?? null,
-                    'product_card'  => $d['links']['product_card'] ?? null,
-                    'support'       => $d['links']['support'] ?? null,
-                    'forum'         => $d['links']['forum'] ?? null,
-                ]
-            );
+            $game->update([
+                'purchase_link' => $d['links']['purchase_link'] ?? null,
+                'product_card'  => $d['links']['product_card'] ?? null,
+                'support'       => $d['links']['support'] ?? null,
+                'forum'         => $d['links']['forum'] ?? null,
+            ]);
         }
 
-        // in_development (1:1)
+        // in_development (moved to gog_games)
         if (isset($d['in_development']) && is_array($d['in_development'])) {
-            GameInDevelopment::updateOrCreate(
-                ['game_id' => $game->id],
-                [
-                    'active' => (bool) ($d['in_development']['active'] ?? false),
-                    'until'  => $d['in_development']['until'] ?? null,
-                ]
-            );
+            $game->update([
+                'is_in_development' => (bool) ($d['in_development']['active'] ?? false),
+                'in_development_until'  => $d['in_development']['until'] ?? null,
+            ]);
         }
 
         // images (1:1)
@@ -194,16 +188,13 @@ class ScanGameDetailJob implements ShouldQueue
             }
         }
 
-        // description (1:1)
+        // description (moved to gog_games)
         if (isset($d['description']) && is_array($d['description'])) {
-            GameDescription::updateOrCreate(
-                ['game_id' => $game->id],
-                [
-                    'lead'                => $d['description']['lead'] ?? null,
-                    'full'                => $d['description']['full'] ?? null,
-                    'whats_cool_about_it' => $d['description']['whats_cool_about_it'] ?? null,
-                ]
-            );
+            $game->update([
+                'lead'                => $d['description']['lead'] ?? null,
+                'full'                => $d['description']['full'] ?? null,
+                'whats_cool_about_it' => $d['description']['whats_cool_about_it'] ?? null,
+            ]);
         }
 
         // screenshots (array + formatted_images)

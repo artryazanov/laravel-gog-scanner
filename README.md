@@ -10,7 +10,7 @@ A Laravel 11/12 package that scans the GOG catalog using queues and stores a ful
 Features
 --------
 - Queue-first design: paginated listing scan, then per-product detail scan.
-- Fully normalized schema for prices, availability, sales visibility, OS support, genres, gallery, screenshots, artifacts (installers/patches/bonus), etc.
+- Fully normalized schema for prices, availability, sales visibility, OS support, genres, languages, companies, categories, gallery, screenshots, and artifacts.
 - Sensible defaults with publishable config.
 - Package migrations are auto-loaded by the service provider.
 
@@ -94,10 +94,23 @@ No authentication is required for the endpoints above.
 
 Database Schema
 ---------------
-The package includes migrations for a normalized schema starting with `gog_games` (non-auto-incrementing primary key equals GOG product id) and the following related tables (non-exhaustive):
+The package includes migrations for a normalized schema starting with `gog_games` (non-auto-incrementing primary key equals GOG product id). Most 1:1 fields are stored directly on `gog_games` (availability, works-on flags, content compatibility, links, description, in-development flags). Related tables include:
 
-- 1:1: `gog_game_prices`, `gog_game_availabilities`, `gog_game_sales_visibilities`, `gog_game_works_on`, `gog_game_content_compatibilities`, `gog_game_links`, `gog_game_in_developments`, `gog_game_images`, `gog_game_descriptions`.
-- 1:N: `gog_game_genres`, `gog_game_galleries`, `gog_game_supported_systems`, `gog_game_languages`, `gog_game_dlcs`, `gog_game_artifacts` (+ `gog_game_artifact_files`), `gog_game_screenshots` (+ `gog_game_screenshot_images`), `gog_game_videos`.
+- 1:1: `gog_game_prices`, `gog_game_sales_visibilities`, `gog_game_images`.
+- 1:N: `gog_game_galleries`, `gog_game_dlcs`, `gog_game_artifacts` (+ `gog_game_artifact_files`), `gog_game_screenshots` (+ `gog_game_screenshot_images`), `gog_game_videos`.
+- Dictionary + pivot: `gog_game_genres` + `gog_game_genre` (genres) and `gog_game_languages` + `gog_game_language` (languages).
+- Dictionary + pivot: `gog_game_supported_systems` + `gog_game_supported_system` (supported OS).
+- Dictionary: `gog_game_companies`.
+- Pivots: `gog_game_developers` and `gog_game_publishers` (allow multiple companies per role).
+- Dictionary: `gog_game_categories` with `gog_games.category_id` and `gog_games.original_category_id` referencing it.
+
+Data Mapping
+------------
+- Developers/Publishers: listing fields `developer` and `publisher` may contain multiple companies separated by commas. They are split, normalized to `gog_game_companies`, and linked via `gog_game_developers` and `gog_game_publishers`.
+- Categories: listing `category` and `originalCategory` map to `gog_game_categories` and are referenced by `gog_games.category_id` and `gog_games.original_category_id`.
+- OS support: listing `worksOn` booleans are kept on `gog_games` (`works_on_windows/mac/linux`). The array `supportedOperatingSystems` is normalized to dictionary `gog_game_supported_systems` and linked via pivot.
+- Languages: detail `languages` map to dictionary `gog_game_languages` and to `gog_game_language` pivot.
+- Genres: listing `genres` map to dictionary `gog_game_genres` and to `gog_game_genre` pivot.
 
 See `database/migrations/*create_gog_schema.php` for exact columns and constraints.
 
@@ -135,4 +148,3 @@ Unlicense — see `LICENSE` for details.
 Credits
 -------
 - Author: Artem Ryazanov <artryazanov@gmail.com>
-
