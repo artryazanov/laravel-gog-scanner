@@ -4,10 +4,11 @@ namespace Artryazanov\GogScanner\Tests\Jobs;
 
 use Artryazanov\GogScanner\Jobs\ScanGameDetailJob;
 use Artryazanov\GogScanner\Jobs\ScanPageJob;
-use Artryazanov\GogScanner\Models\{
-    Game, GamePrice, GameSalesVisibility,
-    GameGallery, GameVideo
-};
+use Artryazanov\GogScanner\Models\Game;
+use Artryazanov\GogScanner\Models\GameGallery;
+use Artryazanov\GogScanner\Models\GamePrice;
+use Artryazanov\GogScanner\Models\GameSalesVisibility;
+use Artryazanov\GogScanner\Models\GameVideo;
 use Artryazanov\GogScanner\Tests\TestCase;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Http;
@@ -58,29 +59,29 @@ class ScanPageJobTest extends TestCase
                     'developer' => 'Mohawk Games',
                     'publisher' => 'Stardock Entertainment',
                     'gallery' => [
-                        "//images-1.gog-statics.com/a.png",
-                        "//images-1.gog-statics.com/b.png",
+                        '//images-1.gog-statics.com/a.png',
+                        '//images-1.gog-statics.com/b.png',
                     ],
                     'video' => null,
-                    'supportedOperatingSystems' => ['windows','mac'],
-                    'genres' => ['Simulation','Strategy','Sci-fi'],
+                    'supportedOperatingSystems' => ['windows', 'mac'],
+                    'genres' => ['Simulation', 'Strategy', 'Sci-fi'],
                     'globalReleaseDate' => 1551304800,
                     'isTBA' => false,
                     'price' => [
-                        'currency' => 'USD','amount' => '1.59','baseAmount' => '3.99','finalAmount' => '1.59',
-                        'isDiscounted' => true,'discountPercentage' => 60,'discountDifference' => '2.40','symbol' => '$',
-                        'isFree' => false,'discount' => 60,'isBonusStoreCreditIncluded' => false,'bonusStoreCreditAmount' => '0.00','promoId' => '2025_back_to_school_3'
+                        'currency' => 'USD', 'amount' => '1.59', 'baseAmount' => '3.99', 'finalAmount' => '1.59',
+                        'isDiscounted' => true, 'discountPercentage' => 60, 'discountDifference' => '2.40', 'symbol' => '$',
+                        'isFree' => false, 'discount' => 60, 'isBonusStoreCreditIncluded' => false, 'bonusStoreCreditAmount' => '0.00', 'promoId' => '2025_back_to_school_3',
                     ],
                     'isDiscounted' => true,
                     'isInDevelopment' => false,
                     'id' => 1841631965,
                     'releaseDate' => 1551304800,
-                    'availability' => ['isAvailable' => true,'isAvailableInAccount' => true],
+                    'availability' => ['isAvailable' => true, 'isAvailableInAccount' => true],
                     'salesVisibility' => [
                         'isActive' => true,
-                        'fromObject' => ['date' => '2024-07-12 15:55:00.000000','timezone_type' => 3,'timezone' => 'Europe/Nicosia'],
+                        'fromObject' => ['date' => '2024-07-12 15:55:00.000000', 'timezone_type' => 3, 'timezone' => 'Europe/Nicosia'],
                         'from' => 1720788900,
-                        'toObject' => ['date' => '2037-12-31 23:59:59.000000','timezone_type' => 3,'timezone' => 'Europe/Nicosia'],
+                        'toObject' => ['date' => '2037-12-31 23:59:59.000000', 'timezone_type' => 3, 'timezone' => 'Europe/Nicosia'],
                         'to' => 2145909599,
                     ],
                     'buyable' => true,
@@ -89,7 +90,7 @@ class ScanPageJobTest extends TestCase
                     'url' => '/en/game/offworld_trading_company_market_corrections',
                     'supportUrl' => '/support/offworld_trading_company_market_corrections',
                     'forumUrl' => '/forum/offworld_trading_company',
-                    'worksOn' => ['Windows' => true,'Mac' => true,'Linux' => false],
+                    'worksOn' => ['Windows' => true, 'Mac' => true, 'Linux' => false],
                     'category' => 'Simulation',
                     'originalCategory' => 'Simulation',
                     'rating' => 0,
@@ -107,27 +108,27 @@ class ScanPageJobTest extends TestCase
                 [
                     'developer' => 'Pixel Perfect Dude',
                     'publisher' => 'Pixel Perfect Dude',
-                    'gallery' => ["//images-1.gog-statics.com/ga.png"],
-                    'video' => ['id' => 'Ru2e4c9B4bk','provider' => 'youtube'],
-                    'supportedOperatingSystems' => ['windows','mac'],
-                    'genres' => ['Racing','Arcade','Rally'],
+                    'gallery' => ['//images-1.gog-statics.com/ga.png'],
+                    'video' => ['id' => 'Ru2e4c9B4bk', 'provider' => 'youtube'],
+                    'supportedOperatingSystems' => ['windows', 'mac'],
+                    'genres' => ['Racing', 'Arcade', 'Rally'],
                     'globalReleaseDate' => 1744750800,
                     'isTBA' => false,
                     'price' => [
-                        'currency' => 'USD','amount' => '13.99','baseAmount' => '19.99','finalAmount' => '13.99',
-                        'isDiscounted' => true,'discountPercentage' => 30,'discountDifference' => '6.00','symbol' => '$',
-                        'isFree' => false,'discount' => 30,'isBonusStoreCreditIncluded' => false,'bonusStoreCreditAmount' => '0.00','promoId' => '2025_back_to_school_2'
+                        'currency' => 'USD', 'amount' => '13.99', 'baseAmount' => '19.99', 'finalAmount' => '13.99',
+                        'isDiscounted' => true, 'discountPercentage' => 30, 'discountDifference' => '6.00', 'symbol' => '$',
+                        'isFree' => false, 'discount' => 30, 'isBonusStoreCreditIncluded' => false, 'bonusStoreCreditAmount' => '0.00', 'promoId' => '2025_back_to_school_2',
                     ],
                     'isDiscounted' => true,
                     'isInDevelopment' => false,
                     'id' => 1511212118,
                     'releaseDate' => 1744750800,
-                    'availability' => ['isAvailable' => true,'isAvailableInAccount' => true],
+                    'availability' => ['isAvailable' => true, 'isAvailableInAccount' => true],
                     'salesVisibility' => [
                         'isActive' => true,
-                        'fromObject' => ['date' => '2024-09-25 17:55:00.000000','timezone_type' => 3,'timezone' => 'Europe/Nicosia'],
+                        'fromObject' => ['date' => '2024-09-25 17:55:00.000000', 'timezone_type' => 3, 'timezone' => 'Europe/Nicosia'],
                         'from' => 1727276100,
-                        'toObject' => ['date' => '2037-12-31 23:59:59.000000','timezone_type' => 3,'timezone' => 'Europe/Nicosia'],
+                        'toObject' => ['date' => '2037-12-31 23:59:59.000000', 'timezone_type' => 3, 'timezone' => 'Europe/Nicosia'],
                         'to' => 2145909599,
                     ],
                     'buyable' => true,
@@ -136,7 +137,7 @@ class ScanPageJobTest extends TestCase
                     'url' => '/en/game/drive_rally',
                     'supportUrl' => '/support/drive_rally',
                     'forumUrl' => '/forum/drive_rally',
-                    'worksOn' => ['Windows' => true,'Mac' => true,'Linux' => false],
+                    'worksOn' => ['Windows' => true, 'Mac' => true, 'Linux' => false],
                     'category' => 'Racing',
                     'originalCategory' => 'Racing',
                     'rating' => 0,

@@ -4,7 +4,8 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration {
+return new class extends Migration
+{
     public function up(): void
     {
         // Companies dictionary (developers/publishers)
@@ -93,7 +94,7 @@ return new class extends Migration {
             $t->unsignedBigInteger('company_id');
             $t->foreign('game_id')->references('id')->on('gog_games')->cascadeOnDelete();
             $t->foreign('company_id')->references('id')->on('gog_game_companies')->cascadeOnDelete();
-            $t->unique(['game_id','company_id']);
+            $t->unique(['game_id', 'company_id']);
         });
 
         Schema::create('gog_game_publishers', function (Blueprint $t) {
@@ -101,7 +102,7 @@ return new class extends Migration {
             $t->unsignedBigInteger('company_id');
             $t->foreign('game_id')->references('id')->on('gog_games')->cascadeOnDelete();
             $t->foreign('company_id')->references('id')->on('gog_game_companies')->cascadeOnDelete();
-            $t->unique(['game_id','company_id']);
+            $t->unique(['game_id', 'company_id']);
         });
 
         // 1:1 tables
@@ -175,7 +176,7 @@ return new class extends Migration {
             $t->unsignedBigInteger('genre_id');
             $t->foreign('game_id')->references('id')->on('gog_games')->cascadeOnDelete();
             $t->foreign('genre_id')->references('id')->on('gog_game_genres')->cascadeOnDelete();
-            $t->unique(['game_id','genre_id']);
+            $t->unique(['game_id', 'genre_id']);
         });
 
         Schema::create('gog_game_galleries', function (Blueprint $t) {
@@ -197,7 +198,7 @@ return new class extends Migration {
             $t->unsignedBigInteger('supported_system_id');
             $t->foreign('game_id')->references('id')->on('gog_games')->cascadeOnDelete();
             $t->foreign('supported_system_id')->references('id')->on('gog_game_supported_systems')->cascadeOnDelete();
-            $t->unique(['game_id','supported_system_id']);
+            $t->unique(['game_id', 'supported_system_id']);
         });
 
         // Dictionary: languages
@@ -213,7 +214,7 @@ return new class extends Migration {
             $t->unsignedBigInteger('language_id');
             $t->foreign('game_id')->references('id')->on('gog_games')->cascadeOnDelete();
             $t->foreign('language_id')->references('id')->on('gog_game_languages')->cascadeOnDelete();
-            $t->unique(['game_id','language_id']);
+            $t->unique(['game_id', 'language_id']);
         });
 
         Schema::create('gog_game_dlcs', function (Blueprint $t) {
@@ -221,7 +222,7 @@ return new class extends Migration {
             $t->unsignedBigInteger('game_id');
             $t->unsignedBigInteger('dlc_product_id');
             $t->foreign('game_id')->references('id')->on('gog_games')->cascadeOnDelete();
-            $t->unique(['game_id','dlc_product_id']);
+            $t->unique(['game_id', 'dlc_product_id']);
         });
 
         // Unified artifacts (installers, patches, language_packs, bonus_content, related_product)

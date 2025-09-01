@@ -2,9 +2,9 @@
 
 namespace Artryazanov\GogScanner\Tests\Console;
 
+use Artryazanov\GogScanner\Jobs\ScanPageJob;
 use Artryazanov\GogScanner\Tests\TestCase;
 use Illuminate\Support\Facades\Bus;
-use Artryazanov\GogScanner\Jobs\ScanPageJob;
 
 class GogScanCommandTest extends TestCase
 {
