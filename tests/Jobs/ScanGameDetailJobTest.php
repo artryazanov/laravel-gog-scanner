@@ -41,10 +41,7 @@ class ScanGameDetailJobTest extends TestCase
         // No specific side-effects to assert; ensure no errors
         $this->assertTrue(true);
     }
-}
 
-class ScanGameDetailJobPositiveTest extends TestCase
-{
     public function test_handle_persists_detail_relations()
     {
         // Seed base game
@@ -135,5 +132,105 @@ class ScanGameDetailJobPositiveTest extends TestCase
         $this->assertSame('full', $g->full);
         $this->assertSame(1, GameScreenshot::where('game_id', $game->id)->count());
         $this->assertSame(2, GameScreenshotImage::count());
+    }
+
+    public function test_dlcs_from_products_replaces_existing()
+    {
+        $game = Game::create(['id' => 1685505421, 'title' => 'seed']);
+
+        // Pre-seed an outdated DLC to verify it gets cleared
+        \Artryazanov\GogScanner\Models\GameDlc::create([
+            'game_id' => $game->id,
+            'dlc_product_id' => 999999999,
+        ]);
+
+        $response = [
+            'id' => $game->id,
+            'title' => 'Card Shark Deluxe Edition',
+            'slug' => 'card_shark_deluxe_edition',
+            'dlcs' => [
+                'products' => [
+                    ['id' => 1845782087],
+                    ['id' => 1670665331],
+                ],
+                'all_products_url' => 'https://api.gog.com/products?ids=1845782087,1670665331',
+            ],
+            'downloads' => ['installers' => [], 'patches' => [], 'language_packs' => [], 'bonus_content' => []],
+        ];
+
+        Http::fake(['*' => Http::response($response, 200)]);
+
+        (new ScanGameDetailJob($game->id))->handle();
+
+        $dlcs = \Artryazanov\GogScanner\Models\GameDlc::where('game_id', $game->id)->pluck('dlc_product_id')->all();
+        sort($dlcs);
+        $this->assertSame([1670665331, 1845782087], $dlcs);
+    }
+
+    public function test_dlcs_from_expanded_dlcs_when_products_absent()
+    {
+        $game = Game::create(['id' => 777000111, 'title' => 'seed']);
+
+        $response = [
+            'id' => $game->id,
+            'title' => 'Some Pack',
+            'slug' => 'some_pack',
+            // no dlcs key
+            'expanded_dlcs' => [
+                ['id' => 111111111],
+                ['id' => 222222222],
+            ],
+            'downloads' => ['installers' => [], 'patches' => [], 'language_packs' => [], 'bonus_content' => []],
+        ];
+
+        Http::fake(['*' => Http::response($response, 200)]);
+
+        (new ScanGameDetailJob($game->id))->handle();
+
+        $dlcs = \Artryazanov\GogScanner\Models\GameDlc::where('game_id', $game->id)->pluck('dlc_product_id')->all();
+        sort($dlcs);
+        $this->assertSame([111111111, 222222222], $dlcs);
+    }
+
+    public function test_dlcs_legacy_flat_array_still_supported()
+    {
+        $game = Game::create(['id' => 1357902468, 'title' => 'seed']);
+
+        $response = [
+            'id' => $game->id,
+            'title' => 'Legacy Format',
+            'slug' => 'legacy_format',
+            'dlcs' => [ ['id' => 333333333], 444444444 ],
+            'downloads' => ['installers' => [], 'patches' => [], 'language_packs' => [], 'bonus_content' => []],
+        ];
+
+        Http::fake(['*' => Http::response($response, 200)]);
+
+        (new ScanGameDetailJob($game->id))->handle();
+
+        $dlcs = \Artryazanov\GogScanner\Models\GameDlc::where('game_id', $game->id)->pluck('dlc_product_id')->all();
+        sort($dlcs);
+        $this->assertSame([333333333, 444444444], $dlcs);
+    }
+
+    public function test_existing_dlcs_remain_when_no_dlc_info_in_response()
+    {
+        $game = Game::create(['id' => 999000111, 'title' => 'seed']);
+        \Artryazanov\GogScanner\Models\GameDlc::create(['game_id' => $game->id, 'dlc_product_id' => 555555555]);
+
+        $response = [
+            'id' => $game->id,
+            'title' => 'No DLC Info',
+            'slug' => 'no_dlc_info',
+            // note: no dlcs and no expanded_dlcs keys present at all
+            'downloads' => ['installers' => [], 'patches' => [], 'language_packs' => [], 'bonus_content' => []],
+        ];
+
+        Http::fake(['*' => Http::response($response, 200)]);
+
+        (new ScanGameDetailJob($game->id))->handle();
+
+        $dlcs = \Artryazanov\GogScanner\Models\GameDlc::where('game_id', $game->id)->pluck('dlc_product_id')->all();
+        $this->assertSame([555555555], $dlcs);
     }
 }

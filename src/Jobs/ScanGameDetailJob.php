@@ -129,14 +129,45 @@ class ScanGameDetailJob implements ShouldQueue
             );
         }
 
-        // DLCs (array)
-        if (isset($d['dlcs']) && is_array($d['dlcs'])) {
-            GameDlc::where('game_id', $game->id)->delete();
-            foreach ($d['dlcs'] as $dlc) {
-                $dlcId = is_array($dlc) ? ($dlc['id'] ?? null) : $dlc;
-                if ($dlcId) {
-                    GameDlc::create(['game_id' => $game->id, 'dlc_product_id' => (int) $dlcId]);
+        // DLCs — API returns object with `products` array; fallback to `expanded_dlcs`
+        if ((isset($d['dlcs']) && is_array($d['dlcs'])) || (isset($d['expanded_dlcs']) && is_array($d['expanded_dlcs']))) {
+            $dlcIds = [];
+
+            // Preferred: dlcs.products
+            if (isset($d['dlcs']) && is_array($d['dlcs']) && isset($d['dlcs']['products']) && is_array($d['dlcs']['products'])) {
+                foreach ($d['dlcs']['products'] as $p) {
+                    if (is_array($p) && isset($p['id'])) {
+                        $dlcIds[] = (int) $p['id'];
+                    } elseif (!is_array($p)) {
+                        // rare fallback: scalar ID
+                        $dlcIds[] = (int) $p;
+                    }
                 }
+            }
+
+            // Fallback: expanded_dlcs (array of DLC objects)
+            if (!$dlcIds && isset($d['expanded_dlcs']) && is_array($d['expanded_dlcs'])) {
+                foreach ($d['expanded_dlcs'] as $p) {
+                    if (is_array($p) && isset($p['id'])) {
+                        $dlcIds[] = (int) $p['id'];
+                    }
+                }
+            }
+
+            // Legacy fallback: dlcs as a flat array of ids/objects with id
+            if (!$dlcIds && isset($d['dlcs']) && is_array($d['dlcs'])) {
+                foreach ($d['dlcs'] as $dlc) {
+                    $dlcId = is_array($dlc) ? ($dlc['id'] ?? null) : $dlc;
+                    if ($dlcId) {
+                        $dlcIds[] = (int) $dlcId;
+                    }
+                }
+            }
+
+            // Replace current DLC links with a fresh set (maybe empty)
+            GameDlc::where('game_id', $game->id)->delete();
+            foreach (array_unique($dlcIds) as $dlcId) {
+                GameDlc::create(['game_id' => $game->id, 'dlc_product_id' => $dlcId]);
             }
         }
 
