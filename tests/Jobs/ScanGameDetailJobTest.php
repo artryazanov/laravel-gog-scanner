@@ -202,7 +202,7 @@ class ScanGameDetailJobTest extends TestCase
             'id' => $game->id,
             'title' => 'Legacy Format',
             'slug' => 'legacy_format',
-            'dlcs' => [ ['id' => 333333333], 444444444 ],
+            'dlcs' => [['id' => 333333333], 444444444],
             'downloads' => ['installers' => [], 'patches' => [], 'language_packs' => [], 'bonus_content' => []],
         ];
 
