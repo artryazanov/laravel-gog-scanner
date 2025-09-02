@@ -11,7 +11,7 @@ return new class extends Migration
     {
         // Add index for game_type
         Schema::table('gog_games', function (Blueprint $table) {
-            if (!self::hasIndex($table->getTable(), 'game_type')) {
+            if (! self::hasIndex($table->getTable(), 'game_type')) {
                 $table->index('game_type');
             }
         });
@@ -54,11 +54,13 @@ return new class extends Migration
                     'SELECT COUNT(1) as cnt FROM information_schema.statistics WHERE table_schema = ? AND table_name = ? AND column_name = ?',
                     [$dbName, $table, $column]
                 );
+
                 return ($exists?->cnt ?? 0) > 0;
             }
         } catch (\Throwable $e) {
             // If detection fails, assume no index and let migration proceed
         }
+
         return false;
     }
 };
