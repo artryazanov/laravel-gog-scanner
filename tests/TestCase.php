@@ -2,8 +2,8 @@
 
 namespace Artryazanov\GogScanner\Tests;
 
-use Orchestra\Testbench\TestCase as BaseTestCase;
 use Artryazanov\GogScanner\GogScannerServiceProvider;
+use Orchestra\Testbench\TestCase as BaseTestCase;
 
 abstract class TestCase extends BaseTestCase
 {
@@ -11,6 +11,7 @@ abstract class TestCase extends BaseTestCase
     {
         parent::setUp();
     }
+
     protected function getPackageProviders($app)
     {
         return [GogScannerServiceProvider::class];

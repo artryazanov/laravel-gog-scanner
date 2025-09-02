@@ -8,9 +8,10 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class GameArtifact extends Model
 {
     protected $table = 'gog_game_artifacts';
+
     protected $fillable = [
-        'game_id','type','artifact_id','name','os','language','language_full',
-        'version','count','total_size','extra_type'
+        'game_id', 'type', 'artifact_id', 'name', 'os', 'language', 'language_full',
+        'version', 'count', 'total_size', 'extra_type',
     ];
 
     public function files(): HasMany

@@ -2,14 +2,16 @@
 
 namespace Artryazanov\GogScanner\Tests\Jobs;
 
+use Artryazanov\GogScanner\Jobs\ScanGameDetailJob;
+use Artryazanov\GogScanner\Models\Game;
+use Artryazanov\GogScanner\Models\GameArtifact;
+use Artryazanov\GogScanner\Models\GameArtifactFile;
+use Artryazanov\GogScanner\Models\GameImages;
+use Artryazanov\GogScanner\Models\GameScreenshot;
+use Artryazanov\GogScanner\Models\GameScreenshotImage;
 use Artryazanov\GogScanner\Tests\TestCase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Artryazanov\GogScanner\Jobs\ScanGameDetailJob;
-use Artryazanov\GogScanner\Models\{
-    Game, Language,
-    GameImages, GameArtifact, GameArtifactFile, GameScreenshot, GameScreenshotImage
-};
 
 class ScanGameDetailJobTest extends TestCase
 {
@@ -52,13 +54,13 @@ class ScanGameDetailJobTest extends TestCase
             'title' => "Unreal Tournament 2004 Editor's Choice Edition",
             'purchase_link' => 'https://www.gog.com/en/checkout/manual/1207658691',
             'slug' => 'unreal_tournament_2004_ece',
-            'content_system_compatibility' => ['windows' => true,'osx' => false,'linux' => false],
+            'content_system_compatibility' => ['windows' => true, 'osx' => false, 'linux' => false],
             'languages' => ['en' => 'English'],
             'links' => [
                 'purchase_link' => 'https://www.gog.com/en/checkout/manual/1207658691',
-                'product_card'  => 'https://www.gog.com/en/game/unreal_tournament_2004_ece',
-                'support'       => 'https://www.gog.com/support/unreal_tournament_2004_ece',
-                'forum'         => 'https://www.gog.com/forum/unreal_series',
+                'product_card' => 'https://www.gog.com/en/game/unreal_tournament_2004_ece',
+                'support' => 'https://www.gog.com/support/unreal_tournament_2004_ece',
+                'forum' => 'https://www.gog.com/forum/unreal_series',
             ],
             'in_development' => ['active' => false, 'until' => null],
             'is_secret' => false,
@@ -79,7 +81,7 @@ class ScanGameDetailJobTest extends TestCase
             'dlcs' => [],
             'downloads' => [
                 'installers' => [[
-                    'id' => 'installer_windows_en', 'name' => "UT2004 ECE", 'os' => 'windows', 'language' => 'en', 'language_full' => 'English', 'version' => '1.0', 'total_size' => 2795503616,
+                    'id' => 'installer_windows_en', 'name' => 'UT2004 ECE', 'os' => 'windows', 'language' => 'en', 'language_full' => 'English', 'version' => '1.0', 'total_size' => 2795503616,
                     'files' => [
                         ['id' => 'en1installer0', 'size' => 1048576, 'downlink' => 'https://api.gog.com/products/1207658691/downlink/installer/en1installer0'],
                         ['id' => 'en1installer1', 'size' => 2794455040, 'downlink' => 'https://api.gog.com/products/1207658691/downlink/installer/en1installer1'],

@@ -2,17 +2,21 @@
 
 namespace Artryazanov\GogScanner\Jobs;
 
+use Artryazanov\GogScanner\Models\Game;
+use Artryazanov\GogScanner\Models\GameArtifact;
+use Artryazanov\GogScanner\Models\GameArtifactFile;
+use Artryazanov\GogScanner\Models\GameDlc;
+use Artryazanov\GogScanner\Models\GameImages;
+use Artryazanov\GogScanner\Models\GameScreenshot;
+use Artryazanov\GogScanner\Models\GameScreenshotImage;
+use Artryazanov\GogScanner\Models\GameVideo;
+use Artryazanov\GogScanner\Models\Language;
 use Illuminate\Bus\Queueable;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
-use Artryazanov\GogScanner\Models\{
-    Game, Language, GameImages,
-    GameDlc, GameArtifact, GameArtifactFile, GameScreenshot, GameScreenshotImage,
-    GameVideo
-};
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Http;
 
 class ScanGameDetailJob implements ShouldQueue
 {
@@ -33,7 +37,7 @@ class ScanGameDetailJob implements ShouldQueue
         $timeout = (int) config('gogscanner.http_timeout', 30);
 
         $endpoint = str_replace('{id}', (string) $this->gameId, config('gogscanner.detail_endpoint'));
-        $url      = rtrim(config('gogscanner.api_base'), '/') . $endpoint;
+        $url = rtrim(config('gogscanner.api_base'), '/').$endpoint;
 
         $params = [];
         $expand = config('gogscanner.expand_fields');
@@ -45,28 +49,29 @@ class ScanGameDetailJob implements ShouldQueue
         if ($resp->failed()) {
             \Log::error('GOG detail request failed', ['game_id' => $this->gameId, 'status' => $resp->status()]);
             $this->release(60);
+
             return;
         }
 
         $d = $resp->json();
-        if (!$d || !isset($d['id'])) {
+        if (! $d || ! isset($d['id'])) {
             return;
         }
 
         $game = Game::find($this->gameId);
-        if (!$game) {
+        if (! $game) {
             return;
         }
 
         // Update simple game fields if present in detail response
         $game->update([
-            'title'            => $d['title'] ?? $game->title,
-            'slug'             => $d['slug']  ?? $game->slug,
-            'changelog'        => $d['changelog'] ?? $game->changelog,
-            'game_type'        => $d['game_type'] ?? $game->game_type,
-            'is_pre_order'     => (bool) ($d['is_pre_order'] ?? $game->is_pre_order),
-            'is_secret'        => (bool) ($d['is_secret'] ?? $game->is_secret),
-            'is_installable'   => (bool) ($d['is_installable'] ?? $game->is_installable),
+            'title' => $d['title'] ?? $game->title,
+            'slug' => $d['slug'] ?? $game->slug,
+            'changelog' => $d['changelog'] ?? $game->changelog,
+            'game_type' => $d['game_type'] ?? $game->game_type,
+            'is_pre_order' => (bool) ($d['is_pre_order'] ?? $game->is_pre_order),
+            'is_secret' => (bool) ($d['is_secret'] ?? $game->is_secret),
+            'is_installable' => (bool) ($d['is_installable'] ?? $game->is_installable),
             'release_date_iso' => $d['release_date'] ?? $game->release_date_iso,
         ]);
 
@@ -74,8 +79,8 @@ class ScanGameDetailJob implements ShouldQueue
         if (isset($d['content_system_compatibility'])) {
             $game->update([
                 'content_windows' => (bool) ($d['content_system_compatibility']['windows'] ?? false),
-                'content_osx'     => (bool) ($d['content_system_compatibility']['osx'] ?? false),
-                'content_linux'   => (bool) ($d['content_system_compatibility']['linux'] ?? false),
+                'content_osx' => (bool) ($d['content_system_compatibility']['osx'] ?? false),
+                'content_linux' => (bool) ($d['content_system_compatibility']['linux'] ?? false),
             ]);
         }
 
@@ -98,9 +103,9 @@ class ScanGameDetailJob implements ShouldQueue
         if (isset($d['links']) && is_array($d['links'])) {
             $game->update([
                 'purchase_link' => $d['links']['purchase_link'] ?? null,
-                'product_card'  => $d['links']['product_card'] ?? null,
-                'support'       => $d['links']['support'] ?? null,
-                'forum'         => $d['links']['forum'] ?? null,
+                'product_card' => $d['links']['product_card'] ?? null,
+                'support' => $d['links']['support'] ?? null,
+                'forum' => $d['links']['forum'] ?? null,
             ]);
         }
 
@@ -108,7 +113,7 @@ class ScanGameDetailJob implements ShouldQueue
         if (isset($d['in_development']) && is_array($d['in_development'])) {
             $game->update([
                 'is_in_development' => (bool) ($d['in_development']['active'] ?? false),
-                'in_development_until'  => $d['in_development']['until'] ?? null,
+                'in_development_until' => $d['in_development']['until'] ?? null,
             ]);
         }
 
@@ -117,14 +122,14 @@ class ScanGameDetailJob implements ShouldQueue
             GameImages::updateOrCreate(
                 ['game_id' => $game->id],
                 [
-                    'background'           => $d['images']['background'] ?? null,
-                    'logo'                 => $d['images']['logo'] ?? null,
-                    'logo2x'               => $d['images']['logo2x'] ?? null,
-                    'icon'                 => $d['images']['icon'] ?? null,
-                    'sidebar_icon'         => $d['images']['sidebarIcon'] ?? null,
-                    'sidebar_icon2x'       => $d['images']['sidebarIcon2x'] ?? null,
+                    'background' => $d['images']['background'] ?? null,
+                    'logo' => $d['images']['logo'] ?? null,
+                    'logo2x' => $d['images']['logo2x'] ?? null,
+                    'icon' => $d['images']['icon'] ?? null,
+                    'sidebar_icon' => $d['images']['sidebarIcon'] ?? null,
+                    'sidebar_icon2x' => $d['images']['sidebarIcon2x'] ?? null,
                     'menu_notification_av' => $d['images']['menuNotificationAv'] ?? null,
-                    'menu_notification_av2'=> $d['images']['menuNotificationAv2'] ?? null,
+                    'menu_notification_av2' => $d['images']['menuNotificationAv2'] ?? null,
                 ]
             );
         }
@@ -181,37 +186,39 @@ class ScanGameDetailJob implements ShouldQueue
             }
 
             $map = [
-                'installers'      => 'installer',
-                'patches'         => 'patch',
-                'language_packs'  => 'language_pack',
-                'bonus_content'   => 'bonus_content',
+                'installers' => 'installer',
+                'patches' => 'patch',
+                'language_packs' => 'language_pack',
+                'bonus_content' => 'bonus_content',
             ];
 
             foreach ($map as $key => $type) {
-                if (!isset($d['downloads'][$key]) || !is_array($d['downloads'][$key])) continue;
+                if (! isset($d['downloads'][$key]) || ! is_array($d['downloads'][$key])) {
+                    continue;
+                }
 
                 foreach ($d['downloads'][$key] as $item) {
                     $artifact = GameArtifact::create([
-                        'game_id'       => $game->id,
-                        'type'          => $type,
-                        'artifact_id'   => (string) ($item['id'] ?? ($item['name'] ?? uniqid($type . '_'))),
-                        'name'          => $item['name'] ?? null,
-                        'os'            => $item['os'] ?? null,
-                        'language'      => $item['language'] ?? null,
+                        'game_id' => $game->id,
+                        'type' => $type,
+                        'artifact_id' => (string) ($item['id'] ?? ($item['name'] ?? uniqid($type.'_'))),
+                        'name' => $item['name'] ?? null,
+                        'os' => $item['os'] ?? null,
+                        'language' => $item['language'] ?? null,
                         'language_full' => $item['language_full'] ?? null,
-                        'version'       => $item['version'] ?? null,
-                        'count'         => isset($item['count']) ? (int) $item['count'] : null,
-                        'total_size'    => isset($item['total_size']) ? (int) $item['total_size'] : null,
-                        'extra_type'    => $item['type'] ?? null, // for bonus_content: manuals/wallpapers/etc.
+                        'version' => $item['version'] ?? null,
+                        'count' => isset($item['count']) ? (int) $item['count'] : null,
+                        'total_size' => isset($item['total_size']) ? (int) $item['total_size'] : null,
+                        'extra_type' => $item['type'] ?? null, // for bonus_content: manuals/wallpapers/etc.
                     ]);
 
                     if (isset($item['files']) && is_array($item['files'])) {
                         foreach ($item['files'] as $f) {
                             GameArtifactFile::create([
                                 'artifact_id' => $artifact->id,
-                                'file_id'     => (string) ($f['id'] ?? ''),
-                                'size'        => isset($f['size']) ? (int) $f['size'] : null,
-                                'downlink'    => $f['downlink'] ?? null,
+                                'file_id' => (string) ($f['id'] ?? ''),
+                                'size' => isset($f['size']) ? (int) $f['size'] : null,
+                                'downlink' => $f['downlink'] ?? null,
                             ]);
                         }
                     }
@@ -222,8 +229,8 @@ class ScanGameDetailJob implements ShouldQueue
         // description (moved to gog_games)
         if (isset($d['description']) && is_array($d['description'])) {
             $game->update([
-                'lead'                => $d['description']['lead'] ?? null,
-                'full'                => $d['description']['full'] ?? null,
+                'lead' => $d['description']['lead'] ?? null,
+                'full' => $d['description']['full'] ?? null,
                 'whats_cool_about_it' => $d['description']['whats_cool_about_it'] ?? null,
             ]);
         }
@@ -238,17 +245,17 @@ class ScanGameDetailJob implements ShouldQueue
 
             foreach ($d['screenshots'] as $s) {
                 $screenshot = GameScreenshot::create([
-                    'game_id'                => $game->id,
-                    'image_id'               => $s['image_id'] ?? null,
+                    'game_id' => $game->id,
+                    'image_id' => $s['image_id'] ?? null,
                     'formatter_template_url' => $s['formatter_template_url'] ?? null,
                 ]);
 
                 if (isset($s['formatted_images']) && is_array($s['formatted_images'])) {
                     foreach ($s['formatted_images'] as $fi) {
                         GameScreenshotImage::create([
-                            'screenshot_id'  => $screenshot->id,
+                            'screenshot_id' => $screenshot->id,
                             'formatter_name' => $fi['formatter_name'] ?? null,
-                            'image_url'      => $fi['image_url'] ?? null,
+                            'image_url' => $fi['image_url'] ?? null,
                         ]);
                     }
                 }
@@ -260,11 +267,11 @@ class ScanGameDetailJob implements ShouldQueue
             GameVideo::where('game_id', $game->id)->where('source', 'detail')->delete();
             foreach ($d['videos'] as $v) {
                 GameVideo::create([
-                    'game_id'  => $game->id,
+                    'game_id' => $game->id,
                     'provider' => $v['provider'] ?? null,
-                    'video_key'=> $v['id'] ?? null,
-                    'title'    => $v['title'] ?? null,
-                    'source'   => 'detail',
+                    'video_key' => $v['id'] ?? null,
+                    'title' => $v['title'] ?? null,
+                    'source' => 'detail',
                 ]);
             }
         }
@@ -277,10 +284,10 @@ class ScanGameDetailJob implements ShouldQueue
                 $rpId = is_array($rp) ? ($rp['id'] ?? null) : $rp;
                 if ($rpId) {
                     GameArtifact::create([
-                        'game_id'     => $game->id,
-                        'type'        => 'related_product',
+                        'game_id' => $game->id,
+                        'type' => 'related_product',
                         'artifact_id' => (string) $rpId,
-                        'name'        => is_array($rp) ? ($rp['title'] ?? null) : null,
+                        'name' => is_array($rp) ? ($rp['title'] ?? null) : null,
                     ]);
                 }
             }

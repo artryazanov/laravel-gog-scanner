@@ -2,15 +2,15 @@
 
 return [
     // Base URLs for GOG APIs
-    'api_base'   => 'https://api.gog.com',
+    'api_base' => 'https://api.gog.com',
     'embed_base' => 'https://embed.gog.com',
 
     // Endpoints
-    'list_endpoint'   => '/games/ajax/filtered',
+    'list_endpoint' => '/games/ajax/filtered',
     'detail_endpoint' => '/products/{id}',
 
     // Expand sections for product details
-    'expand_fields'   => 'downloads,expanded_dlcs,description,screenshots,videos,related_products,changelog',
+    'expand_fields' => 'downloads,expanded_dlcs,description,screenshots,videos,related_products,changelog',
 
     // Default listing parameters
     'default_listing_params' => [
@@ -24,6 +24,6 @@ return [
     // Queue options (can be overridden in the host app)
     'queue' => [
         'connection' => null, // null means default
-        'queue'      => null, // null means default
+        'queue' => null, // null means default
     ],
 ];
