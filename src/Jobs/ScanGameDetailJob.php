@@ -143,7 +143,7 @@ class ScanGameDetailJob implements ShouldQueue
                 foreach ($d['dlcs']['products'] as $p) {
                     if (is_array($p) && isset($p['id'])) {
                         $dlcIds[] = (int) $p['id'];
-                    } elseif (!is_array($p)) {
+                    } elseif (! is_array($p)) {
                         // rare fallback: scalar ID
                         $dlcIds[] = (int) $p;
                     }
@@ -151,7 +151,7 @@ class ScanGameDetailJob implements ShouldQueue
             }
 
             // Fallback: expanded_dlcs (array of DLC objects)
-            if (!$dlcIds && isset($d['expanded_dlcs']) && is_array($d['expanded_dlcs'])) {
+            if (! $dlcIds && isset($d['expanded_dlcs']) && is_array($d['expanded_dlcs'])) {
                 foreach ($d['expanded_dlcs'] as $p) {
                     if (is_array($p) && isset($p['id'])) {
                         $dlcIds[] = (int) $p['id'];
@@ -160,7 +160,7 @@ class ScanGameDetailJob implements ShouldQueue
             }
 
             // Legacy fallback: dlcs as a flat array of ids/objects with id
-            if (!$dlcIds && isset($d['dlcs']) && is_array($d['dlcs'])) {
+            if (! $dlcIds && isset($d['dlcs']) && is_array($d['dlcs'])) {
                 foreach ($d['dlcs'] as $dlc) {
                     $dlcId = is_array($dlc) ? ($dlc['id'] ?? null) : $dlc;
                     if ($dlcId) {
