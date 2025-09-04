@@ -21,6 +21,9 @@ return [
     // HTTP timeout in seconds
     'http_timeout' => 30,
 
+    // Delay between finished jobs in seconds
+    'decay_seconds' => 1,
+
     // Queue options (can be overridden in the host app)
     'queue' => [
         'connection' => null, // null means default

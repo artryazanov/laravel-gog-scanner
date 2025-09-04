@@ -11,20 +11,9 @@ use Artryazanov\GogScanner\Models\GameSalesVisibility;
 use Artryazanov\GogScanner\Models\GameVideo;
 use Artryazanov\GogScanner\Models\Genre;
 use Artryazanov\GogScanner\Models\SupportedSystem;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
 
-class ScanPageJob implements ShouldQueue
+class ScanPageJob extends BaseScanJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    /** Number of attempts for the job */
-    public int $tries = 3;
-
     protected int $page;
 
     public function __construct(int $page)
@@ -32,10 +21,8 @@ class ScanPageJob implements ShouldQueue
         $this->page = $page;
     }
 
-    public function handle(): void
+    protected function doJob(): void
     {
-        $timeout = (int) config('gogscanner.http_timeout', 30);
-
         $url = rtrim(config('gogscanner.embed_base'), '/').config('gogscanner.list_endpoint');
 
         $params = array_merge(
@@ -43,15 +30,10 @@ class ScanPageJob implements ShouldQueue
             ['page' => $this->page]
         );
 
-        $resp = Http::timeout($timeout)->get($url, $params);
-        if ($resp->failed()) {
-            \Log::error('GOG listing request failed', ['page' => $this->page, 'status' => $resp->status()]);
-            $this->release(60);
-
+        $payload = $this->fetchJson($url, $params, 'GOG listing request failed', ['page' => $this->page]);
+        if ($payload === null) {
             return;
         }
-
-        $payload = $resp->json();
         if (! $payload || ! isset($payload['products'])) {
             \Log::warning('GOG listing empty', ['page' => $this->page]);
 
@@ -229,16 +211,12 @@ class ScanPageJob implements ShouldQueue
             }
 
             // Schedule detail job per game
-            ScanGameDetailJob::dispatch($game->id)
-                ->onConnection(config('gogscanner.queue.connection'))
-                ->onQueue(config('gogscanner.queue.queue'));
+            $this->queueDispatch(ScanGameDetailJob::dispatch($game->id));
         }
 
         // Dispatch the next page if available
         if ($currentPage < $totalPages) {
-            ScanPageJob::dispatch($currentPage + 1)
-                ->onConnection(config('gogscanner.queue.connection'))
-                ->onQueue(config('gogscanner.queue.queue'));
+            $this->queueDispatch(ScanPageJob::dispatch($currentPage + 1));
         }
     }
 }

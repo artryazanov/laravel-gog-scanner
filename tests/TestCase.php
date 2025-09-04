@@ -26,6 +26,9 @@ abstract class TestCase extends BaseTestCase
             'database' => ':memory:',
             'prefix' => '',
         ]);
+
+        // Disable decay delay by default in tests to keep suite fast.
+        $app['config']->set('gogscanner.decay_seconds', 0);
     }
 
     /**

@@ -11,20 +11,9 @@ use Artryazanov\GogScanner\Models\GameScreenshot;
 use Artryazanov\GogScanner\Models\GameScreenshotImage;
 use Artryazanov\GogScanner\Models\GameVideo;
 use Artryazanov\GogScanner\Models\Language;
-use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Bus\Dispatchable;
-use Illuminate\Queue\InteractsWithQueue;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Http;
 
-class ScanGameDetailJob implements ShouldQueue
+class ScanGameDetailJob extends BaseScanJob
 {
-    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
-
-    /** Number of attempts for the job */
-    public int $tries = 3;
-
     protected int $gameId;
 
     public function __construct(int $gameId)
@@ -32,10 +21,8 @@ class ScanGameDetailJob implements ShouldQueue
         $this->gameId = $gameId;
     }
 
-    public function handle(): void
+    protected function doJob(): void
     {
-        $timeout = (int) config('gogscanner.http_timeout', 30);
-
         $endpoint = str_replace('{id}', (string) $this->gameId, config('gogscanner.detail_endpoint'));
         $url = rtrim(config('gogscanner.api_base'), '/').$endpoint;
 
@@ -45,15 +32,10 @@ class ScanGameDetailJob implements ShouldQueue
             $params['expand'] = $expand;
         }
 
-        $resp = Http::timeout($timeout)->get($url, $params);
-        if ($resp->failed()) {
-            \Log::error('GOG detail request failed', ['game_id' => $this->gameId, 'status' => $resp->status()]);
-            $this->release(60);
-
+        $d = $this->fetchJson($url, $params, 'GOG detail request failed', ['game_id' => $this->gameId]);
+        if ($d === null) {
             return;
         }
-
-        $d = $resp->json();
         if (! $d || ! isset($d['id'])) {
             return;
         }
