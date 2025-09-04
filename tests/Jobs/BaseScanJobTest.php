@@ -13,7 +13,8 @@ class BaseScanJobTest extends TestCase
     {
         config(['gogscanner.decay_seconds' => 1]);
 
-        $job = new class() extends BaseScanJob {
+        $job = new class extends BaseScanJob
+        {
             protected function doJob(): void
             {
                 // simulate a short job of ~10ms
@@ -35,7 +36,8 @@ class BaseScanJobTest extends TestCase
     {
         config(['gogscanner.decay_seconds' => 0]);
 
-        $job = new class() extends BaseScanJob {
+        $job = new class extends BaseScanJob
+        {
             public ?\Throwable $failedWith = null;
 
             protected function doJob(): void
@@ -61,7 +63,8 @@ class BaseScanJobTest extends TestCase
 
         Http::fake(['*' => Http::response('Server error', 500)]);
 
-        $job = new class() extends BaseScanJob {
+        $job = new class extends BaseScanJob
+        {
             public $result;
 
             protected function doJob(): void

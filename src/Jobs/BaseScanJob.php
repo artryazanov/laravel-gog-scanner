@@ -56,11 +56,10 @@ abstract class BaseScanJob implements ShouldBeUnique, ShouldQueue
     /**
      * Perform a GET request and return JSON or release the job on failure.
      *
-     * @param  string  $url
      * @param  array<string, mixed>  $params
      * @param  string  $errorMessage  Message to log on HTTP failure
-     * @param  array<string, mixed>  $context       Extra context for the log
-     * @param  int     $releaseAfter Seconds to delay before retrying
+     * @param  array<string, mixed>  $context  Extra context for the log
+     * @param  int  $releaseAfter  Seconds to delay before retrying
      * @return array<string, mixed>|null
      */
     protected function fetchJson(string $url, array $params, string $errorMessage, array $context = [], int $releaseAfter = 60): ?array
@@ -80,6 +79,7 @@ abstract class BaseScanJob implements ShouldBeUnique, ShouldQueue
      * Apply the default queue connection and queue name to a pending dispatch.
      *
      * @template T
+     *
      * @param  T  $pending
      * @return T
      */

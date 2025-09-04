@@ -62,4 +62,3 @@ class JobUniquenessTest extends TestCase
         $this->assertContains(ShouldBeUnique::class, class_implements(ScanGameDetailJob::class));
     }
 }
-
