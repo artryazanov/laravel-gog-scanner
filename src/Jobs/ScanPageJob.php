@@ -14,6 +14,8 @@ use Artryazanov\GogScanner\Models\SupportedSystem;
 
 class ScanPageJob extends BaseScanJob
 {
+    public int $timeout = 180;
+
     protected int $page;
 
     public function __construct(int $page)
@@ -43,6 +45,11 @@ class ScanPageJob extends BaseScanJob
         $products = $payload['products'];
         $currentPage = (int) ($payload['page'] ?? $this->page);
         $totalPages = (int) ($payload['totalPages'] ?? $currentPage);
+
+        // Dispatch the next page if available
+        if ($currentPage < $totalPages) {
+            $this->queueDispatch(ScanPageJob::dispatch($currentPage + 1));
+        }
 
         foreach ($products as $p) {
             $gameId = (int) ($p['id'] ?? 0);
@@ -212,11 +219,6 @@ class ScanPageJob extends BaseScanJob
 
             // Schedule detail job per game
             $this->queueDispatch(ScanGameDetailJob::dispatch($game->id));
-        }
-
-        // Dispatch the next page if available
-        if ($currentPage < $totalPages) {
-            $this->queueDispatch(ScanPageJob::dispatch($currentPage + 1));
         }
     }
 }
