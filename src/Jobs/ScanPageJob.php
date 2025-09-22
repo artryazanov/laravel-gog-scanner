@@ -43,11 +43,12 @@ class ScanPageJob extends BaseScanJob
         }
 
         $products = $payload['products'];
+        $hasProducts = is_array($products) && count($products) > 0;
         $currentPage = (int) ($payload['page'] ?? $this->page);
         $totalPages = (int) ($payload['totalPages'] ?? $currentPage);
 
         // Dispatch the next page if available
-        if ($currentPage < $totalPages) {
+        if ($hasProducts || ($currentPage < $totalPages)) {
             $this->queueDispatch(ScanPageJob::dispatch($currentPage + 1));
         }
 
